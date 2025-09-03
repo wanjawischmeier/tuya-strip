@@ -18,13 +18,15 @@ pip install tuya-strip
 
 ### Option 2: Install from Source
 
-1. Clone this repo:
+1. Install [Poetry](https://python-poetry.org/docs/#installation)
+
+2. Clone this repo:
 ```bash
 git clone https://github.com/wanjawischmeier/tuya-strip.git
 cd tuya-strip
 ```
 
-2. Install dependencies:
+3. Install dependencies:
 ```bash
 poetry install
 ```
@@ -44,7 +46,8 @@ The setup command will prompt you to enter your device details:
 
 Configuration is saved to your home directory (`~/.tuya-strip`) and will work from any directory.
 
-**Note**: If you installed from source, prefix all commands with `poetry run` (e.g., `poetry run tuya-strip setup`)
+> [!NOTE]  
+> If you installed from source, prefix all commands with `poetry run` (e.g., `poetry run tuya-strip setup`)
 
 ## Usage
 
