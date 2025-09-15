@@ -38,11 +38,18 @@ Configure your device credentials:
 tuya-strip setup
 ```
 
-The setup command will prompt you to enter your device details:
+The setup command will prompt you to enter your device details (you can get these by running the [tinytuya setup wizard](https://github.com/jasonacox/tinytuya?tab=readme-ov-file#setup-wizard---getting-local-keys)):
 - Device ID
-- Device IP address
+  - Can be found in the respective `devices` entry in the generated `snapshot.json` -> `id` field
+  - Or initially in the [cloud console](platform.tuya.com), under `<Your-Project> -> Devices -> All Devices -> Device ID`
+- Device IP
+  - Can be found in the same entry -> `ip` field
+  - Or in the `devices.json` under the same field
 - Local Key
+  - Can be found in the same entry -> `key` field
+  - Or in the `devices.json` under the same field
 - Protocol Version (default: 3.3)
+  - Can be found in the `devices.json`, at the very bottom of the respective device -> `version` field
 
 Configuration is saved to your home directory (`~/.tuya-strip`) and will work from any directory.
 
