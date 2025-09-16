@@ -1,6 +1,6 @@
 [project]
 name = "tuya-strip"
-version = "0.1.1"
+version = "0.1.2"
 description = "CLI for controlling a Tuya 3-way power strip over LAN"
 authors = [
     { name = "wanjawischmeier" }

@@ -10,13 +10,21 @@ A simple Python CLI to control a Tuya-compatible 3-way smart power strip **over 
 
 ## Installation
 
-### Option 1: Install from PyPI (Recommended)
+### Option 1: Install from PyPI (System-wide)
 
 ```bash
-pip install tuya-strip
+pipx install tuya-strip
 ```
 
-### Option 2: Install from Source
+### Option 2: Install from Source (System-wide)
+
+```bash
+git clone https://github.com/wanjawischmeier/tuya-strip.git
+cd tuya-strip
+pipx install .
+```
+
+### Option 3: Install from Source (Local development)
 
 1. Install [Poetry](https://python-poetry.org/docs/#installation)
 
@@ -38,6 +46,11 @@ Configure your device credentials:
 tuya-strip setup
 ```
 
+For system-wide configuration (requires sudo):
+```bash
+sudo tuya-strip setup --system-wide
+```
+
 The setup command will prompt you to enter your device details (you can get these by running the [tinytuya setup wizard](https://github.com/jasonacox/tinytuya?tab=readme-ov-file#setup-wizard---getting-local-keys)):
 - Device ID
   - Can be found in the respective `devices` entry in the generated `snapshot.json` -> `id` field
@@ -51,10 +64,10 @@ The setup command will prompt you to enter your device details (you can get thes
 - Protocol Version (default: 3.3)
   - Can be found in the `devices.json`, at the very bottom of the respective device -> `version` field
 
-Configuration is saved to your home directory (`~/.tuya-strip`) and will work from any directory.
+Configuration is saved to your home directory (`~/.tuya-strip`) by default. Use `--system-wide` to store configuration in `/etc/tuya-strip/config` for all users.
 
 > [!NOTE]  
-> If you installed from source, prefix all commands with `poetry run` (e.g., `poetry run tuya-strip setup`)
+> If you installed for local development, prefix all commands with `poetry run` (e.g., `poetry run tuya-strip setup`)
 
 ## Usage
 
