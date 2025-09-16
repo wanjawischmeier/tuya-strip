@@ -38,6 +38,11 @@ cd tuya-strip
 ```bash
 poetry install
 ```
+> [!NOTE]
+> To enable `sudo tuya-strip` commands, create a system symlink:
+> ```bash
+> sudo ln -sf ~/.local/bin/tuya-strip /usr/local/bin/tuya-strip
+> ```
 
 ## Setup
 

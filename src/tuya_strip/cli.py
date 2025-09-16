@@ -5,6 +5,7 @@ import json
 import os
 import time
 import socket
+import shutil
 from pathlib import Path
 from dotenv import load_dotenv
 try:
@@ -19,6 +20,23 @@ def get_version():
         return version("tuya-strip")
     except (ImportError, ModuleNotFoundError):
         return "unknown"
+
+
+def _suggest_sudo_command():
+    """Helper to suggest the correct sudo command with symlink creation if needed."""
+    print("Try running with sudo:")
+    print(f"  sudo tuya-strip {' '.join(sys.argv[1:])}")
+    print("\nIf 'sudo: tuya-strip: command not found', create a system symlink:")
+    tuya_strip_path = shutil.which("tuya-strip") or "/usr/local/bin/tuya-strip"
+    print(f"  sudo ln -sf {tuya_strip_path} /usr/local/bin/tuya-strip")
+
+
+def _handle_permission_error(config_path, is_system_wide):
+    """Helper to handle permission errors with appropriate error messages."""
+    print(f"\nError: Permission denied writing to {config_path}")
+    if is_system_wide:
+        _suggest_sudo_command()
+    sys.exit(1)
 
 
 def load_config():
@@ -69,7 +87,13 @@ TUYA_VERSION={version}
     if system_wide:
         config_path = Path("/etc/tuya-strip/config")
         # Create directory if it doesn't exist (may need sudo)
-        config_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            print(f"\nError: Permission denied creating directory {config_path.parent}")
+            print("System-wide configuration requires elevated privileges.")
+            _suggest_sudo_command()
+            sys.exit(1)
     else:
         config_path = Path.home() / ".tuya-strip"
     
@@ -78,11 +102,7 @@ TUYA_VERSION={version}
         print(f"\nConfiguration saved to: {config_path}")
         print("You can now use the tuya-strip commands!")
     except PermissionError:
-        print(f"\nError: Permission denied writing to {config_path}")
-        if system_wide:
-            print("Try running with sudo for system-wide installation:")
-            print("  sudo tuya-strip setup --system-wide")
-        sys.exit(1)
+        _handle_permission_error(config_path, system_wide)
 
 
 def run_with_retry(action, retries=3, delay=1):
