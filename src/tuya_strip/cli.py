@@ -5,17 +5,46 @@ import json
 import os
 import time
 import socket
+import shutil
 from pathlib import Path
 from dotenv import load_dotenv
+try:
+    from importlib.metadata import version
+except ImportError:
+    from importlib_metadata import version
+
+
+def get_version():
+    """Get version from package metadata."""
+    try:
+        return version("tuya-strip")
+    except (ImportError, ModuleNotFoundError):
+        return "unknown"
+
+
+def _suggest_sudo_command():
+    """Helper to suggest the correct sudo command with symlink creation if needed."""
+    print("Try running with sudo:")
+    print(f"  sudo tuya-strip {' '.join(sys.argv[1:])}")
+    print("\nIf 'sudo: tuya-strip: command not found', create a system symlink:")
+    tuya_strip_path = shutil.which("tuya-strip") or "/usr/local/bin/tuya-strip"
+    print(f"  sudo ln -sf {tuya_strip_path} /usr/local/bin/tuya-strip")
+
+
+def _handle_permission_error(config_path, is_system_wide):
+    """Helper to handle permission errors with appropriate error messages."""
+    print(f"\nError: Permission denied writing to {config_path}")
+    if is_system_wide:
+        _suggest_sudo_command()
+    sys.exit(1)
 
 
 def load_config():
     """Load configuration from various locations."""
-    # Try loading from multiple locations in order of priority
+    # Try loading from user-specific config first, then system-wide
     config_locations = [
-        Path.cwd() / ".env",  # Current directory
-        Path.home() / ".tuya-strip",  # Home directory config file
-        Path.home() / ".env",  # Home directory .env
+        Path.home() / ".tuya-strip",  # User-specific config
+        Path("/etc/tuya-strip/config"),  # System-wide config
     ]
     
     for config_path in config_locations:
@@ -35,7 +64,7 @@ def load_config():
     }
 
 
-def setup_config():
+def setup_config(system_wide=False):
     """Interactive setup for device credentials."""
     print("Tuya Device Setup")
     print("================")
@@ -54,12 +83,26 @@ TUYA_LOCAL_KEY={local_key}
 TUYA_VERSION={version}
 """
     
-    # Save to home directory
-    config_path = Path.home() / ".tuya-strip"
-    config_path.write_text(config_content)
+    # Choose config path based on system_wide flag
+    if system_wide:
+        config_path = Path("/etc/tuya-strip/config")
+        # Create directory if it doesn't exist (may need sudo)
+        try:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            print(f"\nError: Permission denied creating directory {config_path.parent}")
+            print("System-wide configuration requires elevated privileges.")
+            _suggest_sudo_command()
+            sys.exit(1)
+    else:
+        config_path = Path.home() / ".tuya-strip"
     
-    print(f"\nConfiguration saved to: {config_path}")
-    print("You can now use the tuya-strip commands!")
+    try:
+        config_path.write_text(config_content)
+        print(f"\nConfiguration saved to: {config_path}")
+        print("You can now use the tuya-strip commands!")
+    except PermissionError:
+        _handle_permission_error(config_path, system_wide)
 
 
 def run_with_retry(action, retries=3, delay=1):
@@ -128,6 +171,11 @@ def main():
     # CLI args
     parser = argparse.ArgumentParser(description="Control Tuya 3-way power strip over LAN")
     parser.add_argument(
+        "--version",
+        action="version",
+        version=f"tuya-strip {get_version()}"
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=10,
@@ -143,7 +191,12 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     # Setup command
-    subparsers.add_parser("setup", help="Setup device credentials")
+    setup_parser = subparsers.add_parser("setup", help="Setup device credentials")
+    setup_parser.add_argument(
+        "--system-wide",
+        action="store_true",
+        help="Store configuration system-wide (requires sudo)"
+    )
 
     on_parser = subparsers.add_parser("on", help="Turn a plug on")
     on_parser.add_argument("plug", type=int, help="Plug number (1-3)")
@@ -157,7 +210,7 @@ def main():
 
     # Handle setup command
     if args.command == "setup":
-        setup_config()
+        setup_config(system_wide=args.system_wide)
         return
 
     # Load credentials
